@@ -1,0 +1,41 @@
+name: TestTpa
+main: com.e_nk.testTpa.TestTpa
+version: 1.0.0
+api-version: "1.20"
+author: e_nk
+description: Advanced teleportation plugin with warmups, cooldowns, pricing, and warp/back/Tpa systems.
+
+commands:
+  tpa:
+    description: Request to teleport to another player.
+    usage: /tpa <player>
+  tpahere:
+    description: Request another player to teleport to you.
+    usage: /tpahere <player>
+  tpaccept:
+    description: Accept a pending teleport request.
+    usage: /tpaccept
+  tpdeny:
+    description: Deny a pending teleport request.
+    usage: /tpdeny
+  tpacancel:
+    description: Cancel your outgoing teleport request.
+    usage: /tpacancel
+
+  warp:
+    description: Warp command controller.
+    usage: /warp <create|delete|to> <name>
+
+  back:
+    description: Teleport to your last death location.
+    usage: /back
+
+permissions:
+  testtpa.tpa:
+    default: true
+  testtpa.tpahere:
+    default: true
+  testtpa.back:
+    default: true
+  testtpa.warp:
+    default: op
