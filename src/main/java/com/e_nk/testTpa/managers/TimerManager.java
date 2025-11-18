@@ -18,36 +18,44 @@ public class TimerManager {
 
     public TimerManager(TestTpa plugin) {
         this.plugin = plugin;
-        this.warmupSeconds = plugin.getConfig().getInt("teleport_timers.warmup_seconds");
-        this.cooldownSeconds = plugin.getConfig().getInt("teleport_timers.cooldown_seconds");
+        this.warmupSeconds = plugin.getConfig().getLong("teleport_timers.warmup_seconds", 3);
+        this.cooldownSeconds = plugin.getConfig().getLong("teleport_timers.cooldown_seconds", 10);
     }
 
     public boolean hasCooldown(Player player) {
-        return cooldowns.containsKey(player.getUniqueId()) &&
-                System.currentTimeMillis() < cooldowns.get(player.getUniqueId());
+        Long t = cooldowns.get(player.getUniqueId());
+        return t != null && System.currentTimeMillis() < t;
     }
 
     public long getRemainingCooldown(Player player) {
-        return (cooldowns.get(player.getUniqueId()) - System.currentTimeMillis()) / 1000;
+        Long t = cooldowns.get(player.getUniqueId());
+        if (t == null) return 0L;
+        long remaining = (t - System.currentTimeMillis()) / 1000;
+        return Math.max(0L, remaining);
     }
 
     public void applyCooldown(Player player) {
         cooldowns.put(player.getUniqueId(),
-                System.currentTimeMillis() + cooldownSeconds * 1000);
+                System.currentTimeMillis() + cooldownSeconds * 1000L);
     }
 
     public void startWarmup(Player player) {
         warmups.put(player.getUniqueId(),
-                System.currentTimeMillis() + warmupSeconds * 1000);
+                System.currentTimeMillis() + warmupSeconds * 1000L);
     }
 
+    // Safe: returns true if warmup either not present (done) or time passed
     public boolean isWarmupDone(Player player) {
-        return !warmups.containsKey(player.getUniqueId()) ||
-                System.currentTimeMillis() >= warmups.get(player.getUniqueId());
+        Long t = warmups.get(player.getUniqueId());
+        if (t == null) return true; // not in warmup, so considered done
+        return System.currentTimeMillis() >= t;
     }
 
     public long getWarmupRemaining(Player player) {
-        return (warmups.get(player.getUniqueId()) - System.currentTimeMillis()) / 1000;
+        Long t = warmups.get(player.getUniqueId());
+        if (t == null) return 0L;
+        long remaining = (t - System.currentTimeMillis()) / 1000;
+        return Math.max(0L, remaining);
     }
 
     public void cancelWarmup(Player player) {

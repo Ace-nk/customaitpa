@@ -16,18 +16,18 @@ public class CostManager {
 
     public int calculateCost(Location from, Location to, boolean isBack) {
 
+        if (from == null || to == null) return plugin.getConfig().getInt("teleport_cost.minimum_price", 1);
+
         double distance = from.distance(to);
 
-        double scaler = plugin.getConfig().getDouble("teleport_cost.scaler");
-        int minimum = plugin.getConfig().getInt("teleport_cost.minimum_price");
+        double scaler = plugin.getConfig().getDouble("teleport_cost.scaler", 1.2);
+        int minimum = plugin.getConfig().getInt("teleport_cost.minimum_price", 1);
 
-        String dim = DimensionUtil.getDimensionKey(from);
+        String dimKey = DimensionUtil.getDimensionKey(to);
+        double dimMult = plugin.getConfig().getDouble("teleport_cost.dimension_multipliers." + dimKey, 1.0);
 
-        double dimMult = plugin.getConfig().getDouble("teleport_cost.dimension_multipliers." + dim, 1.0);
-
-        double cost = Math.sqrt(distance) * scaler * dimMult;
-
-        int finalCost = (int) Math.ceil(cost);
+        double raw = Math.sqrt(Math.max(0.0, distance)) * scaler * dimMult;
+        int finalCost = (int) Math.ceil(raw);
 
         if (finalCost < minimum) finalCost = minimum;
 
@@ -36,16 +36,25 @@ public class CostManager {
 
     public Material getCostItem(boolean isBack) {
 
-        boolean customBack = plugin.getConfig().getBoolean("teleport_cost.back_uses_custom_item");
+        boolean customBack = plugin.getConfig().getBoolean("teleport_cost.back_uses_custom_item", false);
 
+        String matStr;
         if (isBack && customBack) {
-            return Material.matchMaterial(plugin.getConfig().getString("teleport_cost.back_item"));
+            matStr = plugin.getConfig().getString("teleport_cost.back_item", "COMPASS");
+        } else {
+            matStr = plugin.getConfig().getString("teleport_cost.item", "ENDER_PEARL");
         }
 
-        return Material.matchMaterial(plugin.getConfig().getString("teleport_cost.item"));
+        Material m = Material.matchMaterial(matStr);
+        if (m == null) {
+            plugin.getLogger().warning("Invalid material in config: " + matStr + " — defaulting to ENDER_PEARL");
+            return Material.ENDER_PEARL;
+        }
+        return m;
     }
 
     public boolean tryTakePayment(Player player, Material item, int amount) {
+        if (player == null || item == null || amount <= 0) return false;
         return ItemSearch.removeItemsDeep(player, item, amount);
     }
 }

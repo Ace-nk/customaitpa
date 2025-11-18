@@ -14,41 +14,49 @@ public class TpaAcceptCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player target)) {
             sender.sendMessage("Players only.");
             return true;
         }
 
         if (!plugin.getTpaManager().hasIncoming(target)) {
-            target.sendMessage("§cNo pending TPA requests.");
+            target.sendMessage("§cYou have no pending teleport requests.");
             return true;
         }
 
         Player requester = plugin.getTpaManager().getRequester(target);
-        if (requester == null) {
-            target.sendMessage("§cThe requester is offline.");
+        if (requester == null || !requester.isOnline()) {
+            target.sendMessage("§cRequester is offline.");
             plugin.getTpaManager().deny(target);
             return true;
         }
 
-        // mark request accepted
+        // Accept and clean up maps
         plugin.getTpaManager().accept(target);
 
-        int warmup = plugin.getTimerManager().getWarmupRemaining(requester) > 0 ?
-                (int) plugin.getTimerManager().getWarmupRemaining(requester) :
-                plugin.getConfig().getInt("teleport_timers.warmup_seconds");
+        int warmup = (int) plugin.getTimerManager().getWarmupRemaining(requester);
+        if (warmup <= 0) warmup = (int) plugin.getConfig().getLong("teleport_timers.warmup_seconds", 3);
 
         requester.sendMessage("§eTeleporting in §c" + warmup + "§e seconds. Don't move!");
-
         plugin.getTimerManager().startWarmup(requester);
 
+        // schedule teleport after warmup seconds
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (!plugin.getTimerManager().isWarmupDone(requester)) return;
-
+                if (!requester.isOnline()) return;
+                if (!plugin.getTimerManager().isWarmupDone(requester)) {
+                    // not yet done; reschedule a short delay to check later
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            // do nothing here; warmup will be handled in the next check
+                        }
+                    }.runTaskLater(plugin, 5L);
+                    return;
+                }
+                // perform teleport
                 requester.teleport(target.getLocation());
                 requester.sendMessage("§aTeleported!");
                 plugin.getTimerManager().applyCooldown(requester);

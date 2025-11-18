@@ -51,16 +51,14 @@ public class TestTpa extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        warpManager.saveWarps();
-        backManager.saveBackLocations();
+        if (warpManager != null) warpManager.saveWarps();
+        if (backManager != null) backManager.saveBackLocations();
         getLogger().info("TestTpa disabled.");
     }
 
     public TimerManager getTimerManager() { return timerManager; }
     public TpaManager getTpaManager() { return tpaManager; }
     public WarpManager getWarpManager() { return warpManager; }
-    public BackManager getBackManager() {
-        return backManager;
-    }
+    public BackManager getBackManager() { return backManager; }
     public CostManager getCostManager() { return costManager; }
 }

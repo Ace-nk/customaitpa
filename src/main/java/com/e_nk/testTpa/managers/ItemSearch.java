@@ -5,8 +5,7 @@ import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.bukkit.inventory.meta.BlockStateMeta;
 
 public class ItemSearch {
 
@@ -26,6 +25,8 @@ public class ItemSearch {
     private static int countInInventory(Inventory inv, Material material) {
         int count = 0;
 
+        if (inv == null) return 0;
+
         for (ItemStack item : inv.getContents()) {
             if (item == null) continue;
 
@@ -33,11 +34,13 @@ public class ItemSearch {
                 count += item.getAmount();
             }
 
-            if (item.getItemMeta() instanceof BlockStateMeta meta &&
-                    meta.getBlockState() instanceof ShulkerBox box) {
-
-                Inventory shulkerInventory = box.getInventory();
-                count += countInInventory(shulkerInventory, material);
+            if (item.hasItemMeta() && item.getItemMeta() instanceof BlockStateMeta) {
+                BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
+                if (meta.getBlockState() instanceof ShulkerBox) {
+                    ShulkerBox box = (ShulkerBox) meta.getBlockState();
+                    Inventory shInv = box.getInventory();
+                    count += countInInventory(shInv, material);
+                }
             }
         }
         return count;
@@ -62,6 +65,7 @@ public class ItemSearch {
     }
 
     private static int removeFromInventory(Inventory inv, Material mat, int remaining) {
+        if (inv == null) return remaining;
 
         for (int i = 0; i < inv.getSize(); i++) {
 
@@ -78,17 +82,22 @@ public class ItemSearch {
             }
 
             // Shulker boxes
-            if (item.getItemMeta() instanceof BlockStateMeta meta &&
-                    meta.getBlockState() instanceof ShulkerBox box) {
+            if (item.hasItemMeta() && item.getItemMeta() instanceof BlockStateMeta) {
+                BlockStateMeta meta = (BlockStateMeta) item.getItemMeta();
+                if (meta.getBlockState() instanceof ShulkerBox) {
+                    ShulkerBox box = (ShulkerBox) meta.getBlockState();
+                    Inventory shulkerInv = box.getInventory();
 
-                Inventory shulkerInv = box.getInventory();
-                remaining = removeFromInventory(shulkerInv, mat, remaining);
+                    int before = remaining;
+                    remaining = removeFromInventory(shulkerInv, mat, remaining);
 
-                meta.setBlockState(box);
-                item.setItemMeta(meta);
-                inv.setItem(i, item);
+                    // write back modified shulker contents
+                    meta.setBlockState(box);
+                    item.setItemMeta(meta);
+                    inv.setItem(i, item);
 
-                if (remaining <= 0) return 0;
+                    if (remaining <= 0) return 0;
+                }
             }
         }
 
