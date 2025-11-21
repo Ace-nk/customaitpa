@@ -26,7 +26,7 @@ public class CostManager {
         String dimKey = DimensionUtil.getDimensionKey(to);
         double dimMult = plugin.getConfig().getDouble("teleport_cost.dimension_multipliers." + dimKey, 1.0);
 
-        double raw = Math.sqrt(Math.max(0.0, distance)) * scaler * dimMult;
+        double raw = (minimum + distance) * scaler * dimMult;
         int finalCost = (int) Math.ceil(raw);
 
         if (finalCost < minimum) finalCost = minimum;

@@ -1,0 +1,38 @@
+# TestTpa default config (use Material enum names)
+teleport_cost:
+  # Item used for TPA and WARP teleports (use Material enum names)
+  item: "ENDER_PEARL"
+
+  # Should /back use a different item?
+  back_uses_custom_item: true
+  back_item: "COMPASS"
+
+  # Price formula (sqrt scaling, scaler applied):
+  scaler: 1.2
+  minimum_price: 1
+
+  dimension_multipliers:
+    overworld: 1.0
+    nether: 2.0
+    end: 3.0
+
+# WARMUP & COOLDOWN (seconds)
+teleport_timers:
+  warmup_seconds: 3
+  cooldown_seconds: 10
+
+# Request expiration
+tpa_request_expiration_seconds: 30
+
+# Storage filenames inside plugin folder
+storage:
+  warp_file: "warps.yml"
+  back_file: "back.yml"
+
+# Item search
+item_search:
+  deep_scan: true
+  debug: false
+
+warp:
+  max_warps_per_player: 25

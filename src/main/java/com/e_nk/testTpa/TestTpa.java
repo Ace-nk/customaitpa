@@ -31,15 +31,16 @@ public class TestTpa extends JavaPlugin {
         tpaManager = new TpaManager(this);
         warpManager = new WarpManager(this);
         costManager = new CostManager(this);
-        backManager = new BackManager(getDataFolder());
-
+        backManager = new BackManager(this);
         // Register commands
-        getCommand("tpa").setExecutor(new TpaCommand(this));
-        getCommand("tpahere").setExecutor(new TpaHereCommand(this));
-        getCommand("tpaccept").setExecutor(new TpaAcceptCommand(this));
-        getCommand("tpdeny").setExecutor(new TpaDenyCommand(this));
+        getCommand("tpa").setExecutor(new TpaCommand());
+        getCommand("tpahere").setExecutor(new TpaCommand());
+        getCommand("tpaaccept").setExecutor(new TpaCommand());
+        getCommand("tpadeny").setExecutor(new TpaCommand());
+
         getCommand("tpacancel").setExecutor(new TpaCancelCommand(this));
-        getCommand("warp").setExecutor(new WarpCommand(this));
+        getCommand("warp").setExecutor(new WarpCommand());
+        getCommand("warp").setTabCompleter(new WarpTabCompleter());
         getCommand("back").setExecutor(new BackCommand(this));
 
         // Register listeners

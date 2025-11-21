@@ -1,5 +1,6 @@
 package com.e_nk.testTpa.managers;
 
+import com.e_nk.testTpa.TestTpa;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -11,12 +12,29 @@ import java.util.UUID;
 
 public class BackManager {
 
+    private final TestTpa plugin;
     private final File file;
     private final YamlConfiguration config;
     private final HashMap<UUID, Location> cache = new HashMap<>();
 
-    public BackManager(File pluginFolder) {
-        this.file = new File(pluginFolder, "back.yml");
+    /** ---------------------------------------------
+     *  CONSTRUCTOR
+     *  --------------------------------------------- */
+    public BackManager(TestTpa plugin) {
+        this.plugin = plugin;
+        this.file = new File(plugin.getDataFolder(), "back.yml");
+
+        // Create file if it doesn't exist
+        if (!file.exists()) {
+            try {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not create back.yml file!");
+                e.printStackTrace();
+            }
+        }
+
         this.config = YamlConfiguration.loadConfiguration(file);
         loadAll();
     }
@@ -24,14 +42,17 @@ public class BackManager {
     /** ---------------------------------------------
      *  SAVE & LOAD SYSTEM
      *  --------------------------------------------- */
-
     private void loadAll() {
         if (!config.contains("back")) return;
 
         for (String key : config.getConfigurationSection("back").getKeys(false)) {
-            UUID uuid = UUID.fromString(key);
-            Location loc = config.getLocation("back." + key);
-            if (loc != null) cache.put(uuid, loc);
+            try {
+                UUID uuid = UUID.fromString(key);
+                Location loc = config.getLocation("back." + key);
+                if (loc != null) cache.put(uuid, loc);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Invalid UUID in back.yml: " + key);
+            }
         }
     }
 
@@ -42,6 +63,7 @@ public class BackManager {
             }
             config.save(file);
         } catch (IOException e) {
+            plugin.getLogger().severe("Failed to save back locations!");
             e.printStackTrace();
         }
     }
@@ -49,7 +71,6 @@ public class BackManager {
     /** ---------------------------------------------
      *  API
      *  --------------------------------------------- */
-
     public void setBackLocation(Player player, Location location) {
         cache.put(player.getUniqueId(), location);
         save();
@@ -58,9 +79,8 @@ public class BackManager {
     public Location getBackLocation(Player player) {
         return cache.get(player.getUniqueId());
     }
+
     public void saveBackLocations() {
         save();
     }
 }
-
-
