@@ -1,9 +1,8 @@
 package com.e_nk.testTpa.commands;
 
 import com.e_nk.testTpa.TestTpa;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.Material;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 
 public class BackCommand implements CommandExecutor {
@@ -33,13 +32,12 @@ public class BackCommand implements CommandExecutor {
             return true;
         }
 
-        // Fixed cost for /back
-        int cost = 1;
-        var item = plugin.getCostManager().getCostItem(true);
+        int cost = 1; // Always 1 for /back
+        Material item = plugin.getCostManager().getCostItem(true);
 
         if (!plugin.getCostManager().tryTakePayment(p, item, cost)) {
             p.sendMessage("§cYou need 1 " + item + " to use /back.");
-            return true;
+            return true; // stop teleport if payment fails
         }
 
         p.teleport(loc);

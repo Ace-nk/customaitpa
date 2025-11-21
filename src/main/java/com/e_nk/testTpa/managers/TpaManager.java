@@ -22,21 +22,21 @@ public class TpaManager {
         this.requestExpireSeconds = plugin.getConfig().getInt("tpa_request_expiration_seconds");
     }
 
-    public void sendTpaRequest(Player requester, Player target) {
-        outgoing.put(requester.getUniqueId(), target.getUniqueId());
-        incoming.put(target.getUniqueId(), requester.getUniqueId());
+    public void sendTpaRequest(Player sender, Player target) {
+        outgoing.put(sender.getUniqueId(), target.getUniqueId());
+        incoming.put(target.getUniqueId(), sender.getUniqueId());
 
-        requester.sendMessage("§aTPA request sent to " + target.getName());
-        target.sendMessage("§e" + requester.getName() + " wants to teleport to you. /tpaccept or /tpdeny");
+        sender.sendMessage("§aTPA request sent to " + target.getName());
+        target.sendMessage("§e" + sender.getName() + " wants to teleport to you. /tpaccept or /tpdeny");
 
         // Auto-expire after X seconds
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (incoming.containsKey(target.getUniqueId()) &&
-                    incoming.get(target.getUniqueId()).equals(requester.getUniqueId())) {
+                    incoming.get(target.getUniqueId()).equals(sender.getUniqueId())) {
 
-                cancel(requester);
-                requester.sendMessage("§cYour TPA request to " + target.getName() + " expired.");
-                target.sendMessage("§cTPA request from " + requester.getName() + " expired.");
+                cancel(sender);
+                sender.sendMessage("§cYour TPA request to " + target.getName() + " expired.");
+                target.sendMessage("§cTPA request from " + sender.getName() + " expired.");
             }
         }, requestExpireSeconds * 20L);
     }

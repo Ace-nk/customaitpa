@@ -17,14 +17,10 @@ public class BackManager {
     private final YamlConfiguration config;
     private final HashMap<UUID, Location> cache = new HashMap<>();
 
-    /** ---------------------------------------------
-     *  CONSTRUCTOR
-     *  --------------------------------------------- */
     public BackManager(TestTpa plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "back.yml");
 
-        // Create file if it doesn't exist
         if (!file.exists()) {
             try {
                 file.getParentFile().mkdirs();
@@ -39,9 +35,6 @@ public class BackManager {
         loadAll();
     }
 
-    /** ---------------------------------------------
-     *  SAVE & LOAD SYSTEM
-     *  --------------------------------------------- */
     private void loadAll() {
         if (!config.contains("back")) return;
 
@@ -68,9 +61,6 @@ public class BackManager {
         }
     }
 
-    /** ---------------------------------------------
-     *  API
-     *  --------------------------------------------- */
     public void setBackLocation(Player player, Location location) {
         cache.put(player.getUniqueId(), location);
         save();

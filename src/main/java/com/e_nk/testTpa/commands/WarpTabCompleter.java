@@ -1,5 +1,6 @@
 package com.e_nk.testTpa.commands;
 
+import com.e_nk.testTpa.managers.WarpManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
@@ -24,7 +25,7 @@ public class WarpTabCompleter implements TabCompleter {
             }
             case 2 -> {
                 if (args[0].equalsIgnoreCase("to") || args[0].equalsIgnoreCase("delete")) {
-                    for (String warp : WarpCommand.getWarps().keySet()) {
+                    for (String warp : WarpCommand.getWarp().keySet()) {
                         if (warp.toLowerCase().startsWith(args[1].toLowerCase())) completions.add(warp);
                     }
                 }

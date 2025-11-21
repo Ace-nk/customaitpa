@@ -11,52 +11,73 @@ import java.util.HashMap;
 public class WarpManager {
 
     private final TestTpa plugin;
+    private final File file;
+    private final YamlConfiguration config;
     private final HashMap<String, Location> warps = new HashMap<>();
-
-    private final File warpFile;
-    private YamlConfiguration warpConfig;
 
     public WarpManager(TestTpa plugin) {
         this.plugin = plugin;
-        this.warpFile = new File(plugin.getDataFolder(), plugin.getConfig().getString("storage.warp_file"));
+        this.file = new File(plugin.getDataFolder(), "warps.yml");
+
+        if (!file.exists()) {
+            try {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not create warps.yml file!");
+                e.printStackTrace();
+            }
+        }
+
+        this.config = YamlConfiguration.loadConfiguration(file);
         loadWarps();
     }
 
-    public void setWarp(String name, Location loc) {
+    public void addWarp(String name, Location loc) {
         warps.put(name.toLowerCase(), loc);
         saveWarps();
     }
 
-    public void deleteWarp(String name) {
+    public void removeWarp(String name) {
         warps.remove(name.toLowerCase());
-        saveWarps();
+        config.set("warps." + name.toLowerCase(), null);
+        saveConfig();
     }
 
     public Location getWarp(String name) {
         return warps.get(name.toLowerCase());
     }
 
-    private void loadWarps() {
-        if (!warpFile.exists()) return;
-
-        warpConfig = YamlConfiguration.loadConfiguration(warpFile);
-
-        for (String name : warpConfig.getKeys(false)) {
-            Location loc = warpConfig.getLocation(name);
-            if (loc != null) warps.put(name, loc);
-        }
+    public HashMap<String, Location> getAllWarps() {
+        return warps;
     }
 
     public void saveWarps() {
-        warpConfig = new YamlConfiguration();
-
-        for (String name : warps.keySet()) {
-            warpConfig.set(name, warps.get(name));
-        }
-
         try {
-            warpConfig.save(warpFile);
+            for (String key : warps.keySet()) {
+                config.set("warps." + key, warps.get(key));
+            }
+            config.save(file);
         } catch (IOException e) {
+            plugin.getLogger().severe("Failed to save warps.yml!");
+            e.printStackTrace();
+        }
+    }
+
+    public void loadWarps() {
+        if (!config.contains("warps")) return;
+
+        for (String key : config.getConfigurationSection("warps").getKeys(false)) {
+            Location loc = config.getLocation("warps." + key);
+            if (loc != null) warps.put(key.toLowerCase(), loc);
+        }
+    }
+
+    private void saveConfig() {
+        try {
+            config.save(file);
+        } catch (IOException e) {
+            plugin.getLogger().severe("Failed to save warps.yml!");
             e.printStackTrace();
         }
     }

@@ -1,92 +1,87 @@
 package com.e_nk.testTpa.commands;
 
+import com.e_nk.testTpa.TestTpa;
+import com.e_nk.testTpa.managers.WarpManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.Material;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
-
-import java.util.HashMap;
 
 public class WarpCommand implements CommandExecutor {
 
-    // Global warp storage: Name -> Location
-    private static final HashMap<String, Location> warps = new HashMap<>();
-    private static final double CROSS_WORLD_COST = 100; // Example flat cost for cross-world warp
+    private final TestTpa plugin;
+
+    public WarpCommand() {
+        this.plugin = TestTpa.getInstance();
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use warps.");
+
+        if (!(sender instanceof Player p)) {
+            sender.sendMessage("Players only.");
             return true;
         }
 
         if (args.length == 0) {
-            player.sendMessage("§6Warp commands: /warp to, /warp create, /warp delete");
+            p.sendMessage("§aWarp commands: /warp create <name>, /warp delete <name>, /warp to <name>");
             return true;
         }
 
-        switch (args[0].toLowerCase()) {
-            case "to":
-                if (args.length == 1) {
-                    player.sendMessage("§6Available warps: §e" + String.join(", ", warps.keySet()));
+        String sub = args[0].toLowerCase();
+
+        switch (sub) {
+            case "create" -> {
+                if (args.length < 2) {
+                    p.sendMessage("§cUsage: /warp create <name>");
+                    return true;
+                }
+                String name = args[1];
+                plugin.getWarpManager().addWarp(name, p.getLocation());
+                p.sendMessage("§aWarp §e" + name + " §acreated!");
+            }
+            case "delete" -> {
+                if (args.length < 2) {
+                    p.sendMessage("§cUsage: /warp delete <name>");
+                    return true;
+                }
+                String name = args[1];
+                plugin.getWarpManager().removeWarp(name);
+                p.sendMessage("§aWarp §e" + name + " §adeleted!");
+            }
+            case "to" -> {
+                if (args.length < 2) {
+                    p.sendMessage("§cUsage: /warp to <name>");
+                    return true;
+                }
+                String name = args[1];
+                Location loc = plugin.getWarpManager().getWarp(name);
+                if (loc == null) {
+                    p.sendMessage("§cWarp §e" + name + " §cdoes not exist!");
                     return true;
                 }
 
-                String warpName = args[1];
-                if (!warps.containsKey(warpName)) {
-                    player.sendMessage("§cWarp does not exist.");
+                if (plugin.getTimerManager().hasCooldown(p)) {
+                    p.sendMessage("§cYou are on cooldown: " + plugin.getTimerManager().getRemainingCooldown(p) + "s");
                     return true;
                 }
 
-                Location targetLoc = warps.get(warpName);
+                int cost = plugin.getCostManager().calculateCost(p.getLocation(), loc, false);
+                Material item = plugin.getCostManager().getCostItem(false);
 
-                // Example cost handling (ignores cross-world distance)
-                double cost;
-                if (!player.getWorld().equals(targetLoc.getWorld())) {
-                    cost = CROSS_WORLD_COST;
-                } else {
-                    cost = player.getLocation().distance(targetLoc);
-                }
-
-                player.teleport(targetLoc);
-                player.sendMessage("§aWarped to §e" + warpName + " §7(Cost: " + (int) cost + ")");
-                break;
-
-            case "create":
-                if (args.length != 2) {
-                    player.sendMessage("Usage: /warp create <name>");
+                if (!plugin.getCostManager().tryTakePayment(p, item, cost)) {
+                    p.sendMessage("§cYou need " + cost + " " + item + " to warp!");
                     return true;
                 }
-                String newWarp = args[1];
-                warps.put(newWarp, player.getLocation());
-                player.sendMessage("§aWarp §e" + newWarp + " §acreated!");
-                break;
 
-            case "delete":
-                if (args.length != 2) {
-                    player.sendMessage("Usage: /warp delete <name>");
-                    return true;
-                }
-                String deleteWarp = args[1];
-                if (warps.remove(deleteWarp) != null) {
-                    player.sendMessage("§cWarp §e" + deleteWarp + " §cremoved!");
-                } else {
-                    player.sendMessage("§cWarp does not exist.");
-                }
-                break;
-
-            default:
-                player.sendMessage("§cUnknown warp command.");
-                break;
+                p.teleport(loc);
+                p.sendMessage("§aWarped to §e" + name + "§a!");
+                plugin.getTimerManager().applyCooldown(p);
+            }
+            default -> p.sendMessage("§cUnknown warp command. Use /warp create, delete, or to.");
         }
 
         return true;
-    }
-
-    public static HashMap<String, Location> getWarps() {
-        return warps;
     }
 }
